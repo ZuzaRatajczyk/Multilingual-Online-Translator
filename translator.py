@@ -3,7 +3,7 @@ import sys
 from bs4 import BeautifulSoup
 
 args = sys.argv
-languages = {0: 'All', 1: 'Arabic', 2: 'German', 3: 'English', 4: 'Spanish', 5: 'French', 6: 'Hebrew', 7: 'Japanese',
+languages = {0: 'all', 1: 'Arabic', 2: 'German', 3: 'English', 4: 'Spanish', 5: 'French', 6: 'Hebrew', 7: 'Japanese',
              8: 'Dutch', 9: 'Polish', 10: 'Portuguese', 11: 'Romanian', 12: 'Russian', 13: 'Turkish'}
 
 
@@ -61,21 +61,27 @@ def translate(first_language, second_language, word, num_of_translations=5):
     examples = extract_examples(examples_first_language, examples_second_language, num_of_translations)
     return words, examples
 
+
 def main():
-    print("Hello, you're welcome to the translator. Translator supports:")
-    for i, language in languages.items():
-        if i == 0:
-            pass
-        else:
-            print(f'{i}. {language}')
-    first_language, second_language, word = take_input()
-    if second_language == 'All':
+    if len(args) == 4:
+        first_language = args[1]
+        second_language = args[2]
+        word = args[3]
+    else:
+        print("Hello, you're welcome to the translator. Translator supports:")
+        for i, language in languages.items():
+            if i == 0:
+                pass
+            else:
+                print(f'{i}. {language}')
+        first_language, second_language, word = take_input()
+    if second_language == 'all':
         file = open(f'{word}.txt', 'w', encoding='utf-8')
         for language in languages.values():
             word_translation, usage_example = translate(first_language, language, word, num_of_translations=1)
             if word_translation:
-                file.write(f'\n{language} Translations:' + '\n' + word_translation[0] + '\n\n')
-                file.write(f'{language} Example:' + '\n' + '\n'.join(usage_example) + '\n\n')
+                file.write(f'\n{language.capitalize()} Translations:' + '\n' + word_translation[0] + '\n\n')
+                file.write(f'{language.capitalize()} Example:' + '\n' + '\n'.join(usage_example) + '\n\n')
         file.close()
         file = open(f'{word}.txt', 'r', encoding='utf-8')
         print(file.read())
@@ -84,8 +90,8 @@ def main():
         file = open(f'{word}.txt', 'w', encoding='utf-8')
         word_translations, usage_examples = translate(first_language, second_language, word)
         if word_translations:
-            file.write(f'\n{second_language} Translations:' + '\n' + '\n'.join(word_translations) + '\n\n')
-            file.write(f'{second_language} Example:' + '\n' + '\n'.join(usage_examples) + '\n\n')
+            file.write(f'\n{second_language.capitalize()} Translations:' + '\n' + '\n'.join(word_translations) + '\n\n')
+            file.write(f'{second_language.capitalize()} Example:' + '\n' + '\n'.join(usage_examples) + '\n\n')
         file.close()
         file = open(f'{word}.txt', 'r', encoding='utf-8')
         print(file.read())
