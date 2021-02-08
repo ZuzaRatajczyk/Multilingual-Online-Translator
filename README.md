@@ -44,3 +44,5 @@ Tranlator gives two types of data: words and usage examples.
 There are two separated functions for this purposes: `extract_words()` and `extract_examples()`
 Both functions enable to choose number of words/examples to show. 
 
+`text()` method returns a text paragraph from the page.
+
