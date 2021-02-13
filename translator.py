@@ -3,13 +3,18 @@ import sys
 from bs4 import BeautifulSoup
 
 args = sys.argv
-languages = {0: 'all', 1: 'Arabic', 2: 'German', 3: 'English', 4: 'Spanish', 5: 'French', 6: 'Hebrew', 7: 'Japanese',
+languages = {0: 'All', 1: 'Arabic', 2: 'German', 3: 'English', 4: 'Spanish', 5: 'French', 6: 'Hebrew', 7: 'Japanese',
              8: 'Dutch', 9: 'Polish', 10: 'Portuguese', 11: 'Romanian', 12: 'Russian', 13: 'Turkish'}
 
 
 def create_request(word, direction):
-    return requests.get(f'https://context.reverso.net/translation/{direction.lower()}/{word.lower()}',
+    try:
+        r = requests.get(f'https://context.reverso.net/translation/{direction.lower()}/{word.lower()}',
                         headers={'User-Agent': 'Mozilla/5.0'})
+    except requests.ConnectionError:
+        print('Something wrong with your internet connection')
+    else:
+        return r
 
 
 def web_scraping(data):
@@ -24,7 +29,7 @@ def web_scraping(data):
 def extract_words(translations, num_of_words):
     trans_words = []
     for i, word in enumerate(translations[:num_of_words + 1]):
-        if i == 0:
+        if i == 0:  # skip first word which is "Translations:"
             pass
         else:
             trans_words.append(word.text.strip())
@@ -56,10 +61,13 @@ def take_input():
 def translate(first_language, second_language, word, num_of_translations=5):
     direction = f'{first_language}-{second_language}'
     r = create_request(word, direction)
+    if r.status_code != 200:
+        raise Exception(f'Sorry, unable to find {word}')
     translations, examples_first_language, examples_second_language = web_scraping(r)
     words = extract_words(translations, num_of_translations)
     examples = extract_examples(examples_first_language, examples_second_language, num_of_translations)
     return words, examples
+
 
 
 def main():
@@ -75,11 +83,23 @@ def main():
             else:
                 print(f'{i}. {language}')
         first_language, second_language, word = take_input()
-    if second_language == 'all':
+    if first_language.capitalize() not in languages.values():
+        raise Exception(f"Sorry, the program doesn't support {first_language}")
+    if second_language.capitalize() not in languages.values():
+        raise Exception(f"Sorry, the program doesn't support {second_language}")
+    if second_language == 'all'.capitalize() or second_language == 'all':
         file = open(f'{word}.txt', 'w', encoding='utf-8')
         for language in languages.values():
-            word_translation, usage_example = translate(first_language, language, word, num_of_translations=1)
-            if word_translation:
+            if language == 'All':
+                continue
+            if language == first_language.capitalize():
+                continue
+            try:
+                word_translation, usage_example = translate(first_language, language, word, num_of_translations=1)
+            except Exception as er:
+                print(er)
+                break
+            else:
                 file.write(f'\n{language.capitalize()} Translations:' + '\n' + word_translation[0] + '\n\n')
                 file.write(f'{language.capitalize()} Example:' + '\n' + '\n'.join(usage_example) + '\n\n')
         file.close()
@@ -88,15 +108,21 @@ def main():
         file.close()
     else:
         file = open(f'{word}.txt', 'w', encoding='utf-8')
-        word_translations, usage_examples = translate(first_language, second_language, word)
-        if word_translations:
+        try:
+            word_translations, usage_examples = translate(first_language, second_language, word)
+        except Exception as er:
+            print(er)
+        else:
             file.write(f'\n{second_language.capitalize()} Translations:' + '\n' + '\n'.join(word_translations) + '\n\n')
             file.write(f'{second_language.capitalize()} Example:' + '\n' + '\n'.join(usage_examples) + '\n\n')
-        file.close()
-        file = open(f'{word}.txt', 'r', encoding='utf-8')
-        print(file.read())
-        file.close()
+            file.close()
+            file = open(f'{word}.txt', 'r', encoding='utf-8')
+            print(file.read())
+            file.close()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as err:
+        print(err)
